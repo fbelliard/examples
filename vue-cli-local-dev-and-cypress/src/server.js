@@ -1,46 +1,51 @@
-import { createServer } from "miragejs";
+import { createServer, Factory, Model, RestSerializer } from "miragejs";
 
 export function makeServer({ environment = "development" } = {}) {
   let server = createServer({
     environment,
-
-    seeds(server) {
-      server.db.loadData({
-        todos: [
-          { text: "Buy groceries", isDone: false },
-          { text: "Walk the dog", isDone: false },
-          { text: "Do laundry", isDone: false },
-        ],
-      });
+    serializers: {
+      todo: RestSerializer.extend({
+        root: false,
+        embed: true,
+        normalize(payload) {
+          return {
+            data: {
+              type: "todos",
+              attributes: {
+                id: payload.id,
+                text: payload.text,
+                "is-done": payload.isDone,
+              },
+            },
+          };
+        },
+      }),
     },
-
+    models: {
+      todo: Model,
+    },
+    factories: {
+      todo: Factory.extend({
+        text(i) {
+          return `Tâche ${i + 1}`;
+        },
+        isDone: false,
+      }),
+    },
+    seeds(server) {
+      server.createList("todo", 1);
+    },
     routes() {
       this.namespace = "api";
       this.timing = 750;
 
-      this.get("/todos", ({ db }) => {
-        return db.todos;
-      });
-
-      this.patch("/todos/:id", (schema, request) => {
-        let todo = JSON.parse(request.requestBody).data;
-
-        return schema.db.todos.update(todo.id, todo);
-      });
-
-      this.post("/todos", (schema, request) => {
-        let todo = JSON.parse(request.requestBody).data;
-
-        return schema.db.todos.insert(todo);
-      });
-
-      this.delete("/todos/:id", (schema, request) => {
-        return schema.db.todos.remove(request.params.id);
-      });
+      this.get("/todos");
+      this.get("/todos/:id");
+      this.delete("/todos/:id");
+      this.post("/todos");
+      this.patch("/todos/:id");
     },
   });
-
-  window.server = server;
 
   return server;
 }

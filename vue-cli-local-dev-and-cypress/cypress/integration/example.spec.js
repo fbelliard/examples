@@ -10,15 +10,10 @@ afterEach(() => {
   server.shutdown();
 });
 
-it("shows the users from our server", () => {
-  server.logging = true;
-  server.db.loadData({
-    todos: [{ text: "Buy groceries", isDone: false }],
-  });
+it("should have one task", () => {
+  server.create("todo");
 
   cy.visit("/");
 
-  cy.get('[data-testid="Buy groceries"]')
-    .get("input")
-    .should("not.value", "Buy groceries");
+  cy.get('ul > li').should("have.length", 1);
 });

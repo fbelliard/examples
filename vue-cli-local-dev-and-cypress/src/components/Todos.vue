@@ -66,7 +66,7 @@ export default {
       isLoading: true,
       newTodo: {},
       todos: [],
-      pendingOps: []
+      pendingOps: [],
     };
   },
 
@@ -76,16 +76,16 @@ export default {
     },
 
     done() {
-      return this.todos.filter(todo => todo.isDone).length;
+      return this.todos.filter((todo) => todo.isDone).length;
     },
 
     remaining() {
-      return this.todos.filter(todo => !todo.isDone).length;
+      return this.todos.filter((todo) => !todo.isDone).length;
     },
 
     total() {
       return this.todos.length;
-    }
+    },
   },
 
   created() {
@@ -104,44 +104,42 @@ export default {
       let index = this.todos.length;
       this.$set(this.todos, index, todo);
       this.newTodo = {};
-
-      todo = await axios
-        .post(`/api/todos`, { data: todo })
-        .then(json => json.data);
+      todo.isDone = false;
+      todo = await axios.post(`/api/todos`, todo).then((json) => json.data);
 
       // Update client side cache with record from server
       this.$set(this.todos, index, todo);
 
-      this.pendingOps = this.pendingOps.filter(id => id !== operationId);
+      this.pendingOps = this.pendingOps.filter((id) => id !== operationId);
     },
 
     async saveTodo(todo) {
       const operationId = Symbol();
       this.pendingOps.push(operationId);
 
-      let index = this.todos.findIndex(t => t.id === todo.id);
+      let index = this.todos.findIndex((t) => t.id === todo.id);
       this.$set(this.todos, index, todo);
 
-      await axios.patch(`/api/todos/${todo.id}`, { data: todo });
+      await axios.patch(`/api/todos/${todo.id}`, todo);
 
-      this.pendingOps = this.pendingOps.filter(id => id !== operationId);
+      this.pendingOps = this.pendingOps.filter((id) => id !== operationId);
     },
 
     async deleteCompleted() {
       const operationId = Symbol();
       this.pendingOps.push(operationId);
 
-      let completedTodos = this.todos.filter(t => t.isDone);
-      let remainingTodos = this.todos.filter(t => !t.isDone);
+      let completedTodos = this.todos.filter((t) => t.isDone);
+      let remainingTodos = this.todos.filter((t) => !t.isDone);
       this.todos = remainingTodos;
 
       await Promise.all(
-        completedTodos.map(todo => axios.delete(`/api/todos/${todo.id}`))
+        completedTodos.map((todo) => axios.delete(`/api/todos/${todo.id}`))
       );
 
-      this.pendingOps = this.pendingOps.filter(id => id !== operationId);
-    }
-  }
+      this.pendingOps = this.pendingOps.filter((id) => id !== operationId);
+    },
+  },
 };
 </script>
 
